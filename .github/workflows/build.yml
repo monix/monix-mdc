@@ -52,12 +52,12 @@ jobs:
 
   publish:
     needs: [ js-tests, jvm-tests ]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: olafurpg/setup-scala@v2
-      - uses: olafurpg/setup-gpg@v2
+      - uses: olafurpg/setup-scala@v10
+      - uses: olafurpg/setup-gpg@v3
       - name: Publish release ${{ github.ref }}
         run: |
           ./.github/scripts/release.sh
