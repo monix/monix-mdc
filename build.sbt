@@ -17,7 +17,6 @@ inThisBuild(List(
 ))
 
 val monixVersion = "3.3.0"
-val minitestVersion = "2.8.2"
 val catsEffectVersion = "2.1.4"
 
 lazy val `monix-mdc` = project.in(file("."))
@@ -93,14 +92,10 @@ lazy val sharedSettings = Seq(
     "-Xlint:package-object-classes", // Class or object defined in package object
   ),
 
-  // Silence all warnings from src_managed files
-  scalacOptions += "-P:silencer:pathFilters=.*[/]src_managed[/].*",
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.0" cross CrossVersion.full),
-  addCompilerPlugin("com.github.ghik" % "silencer-plugin" % "1.6.0" cross CrossVersion.full),
 
   libraryDependencies ++= Seq(
-    "io.monix" %%% "monix-execution" % monixVersion,
-    "io.monix" %%% "minitest" % minitestVersion % Test,
+    "io.monix" %%% "monix-execution" % monixVersion
   ),
 
   scalacOptions in ThisBuild ++= Seq(
@@ -127,7 +122,6 @@ lazy val sharedSettings = Seq(
   publishArtifact in Test := false,
   pomIncludeRepository := { _ => false }, // removes optional dependencies
 
-  testFrameworks := Seq(new TestFramework("minitest.runner.Framework")),
   headerLicense := Some(HeaderLicense.Custom(
     """|Copyright (c) 2021-2021 by The Monix Project Developers.
        |See the project homepage at: https://monix.io
