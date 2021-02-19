@@ -2,3 +2,6 @@
 
 # monix-mdc
 MDC Support for Monix Task using TaskLocal
+
+Examples:
+- [Monix Task and Akka HTTP](https://github.com/Avasil/akka-monix-local-example/blob/master/src/main/scala/AkkaHTTPExample.scala)
