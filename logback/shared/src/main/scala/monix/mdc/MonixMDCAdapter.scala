@@ -19,12 +19,13 @@ package monix.mdc
 
 import monix.execution.misc.Local
 import ch.qos.logback.classic.util.LogbackMDCAdapter
-import collection.JavaConverters._
+import org.slf4j.MDC
 
+import collection.JavaConverters._
 import java.{util => ju}
 
 class MonixMDCAdapter extends LogbackMDCAdapter {
-  private[this] val local = Local[Map[String, String]](Map.empty[String, String])
+  private val local = Local[Map[String, String]](Map.empty[String, String])
 
   override def put(key: String, `val`: String): Unit = local.update(local() + (key -> `val`))
 
@@ -41,6 +42,7 @@ class MonixMDCAdapter extends LogbackMDCAdapter {
 
   override def getPropertyMap: ju.Map[String, String] = local().asJava
   override def getKeys: ju.Set[String]                = local().keySet.asJava
+
 }
 
 object MonixMDCAdapter {
@@ -58,5 +60,18 @@ object MonixMDCAdapter {
     field.setAccessible(true)
     field.set(null, new MonixMDCAdapter)
     field.setAccessible(false)
+  }
+
+  def productToMap[P <: Product](product: P): Map[String, String] = {
+    val fields = product.getClass.getDeclaredFields.map(_.getName)
+    val values = product.productIterator.toSeq.map {
+      case maybe: Option[_] => maybe
+      case value => Option(value)
+    }
+    fields.zip(values).collect{ case (k, Some(v)) => (k, v.toString)}.toMap
+  }
+
+  def updateContext[P <: Product](product: P): Unit = {
+    MDC.setContextMap(productToMap(product).asJava)
   }
 }
