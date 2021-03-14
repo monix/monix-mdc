@@ -25,7 +25,7 @@ import collection.JavaConverters._
 import java.{util => ju}
 
 class MonixMDCAdapter extends LogbackMDCAdapter {
-  private val local = Local[Map[String, String]](Map.empty[String, String])
+  private[this] val local = Local[Map[String, String]](Map.empty[String, String])
 
   override def put(key: String, `val`: String): Unit = local.update(local() + (key -> `val`))
 
