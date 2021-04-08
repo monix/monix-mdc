@@ -25,23 +25,54 @@ class MDCProductSpec extends AsyncWordSpec with Matchers {
 
   "MonixMDC" should {
 
-    "update context with field names" in {
+    "sets the context with the given product fields" in {
       val metadataCtx = genMetadaCtx.sample.get
+      val staticFieldName = "staticFieldName"
+      val staticValueName = "staticValueName"
 
-      Task.evalAsync(MonixMDCAdapter.updateContext(metadataCtx)) >>
-        Task {
+      Task(MDC.put(staticFieldName, staticValueName)) *>
+        Task(MDC.get(staticFieldName) shouldBe staticValueName) *>
+        Task(MonixMDCAdapter.setContext(metadataCtx)) *>
+        Task.eval {
           MDC.get("idString") shouldBe metadataCtx.idString
           MDC.get("idInt") shouldBe metadataCtx.idInt.toString
           MDC.get("timestamp") shouldBe metadataCtx.timestamp.toString
           MDC.get("other") shouldBe metadataCtx.other.toString
+          // the value is `null` because `setContext` is overwriting it
+          MDC.get(staticFieldName) shouldBe null
+          MDC.get("random") shouldBe null
         }
     }.runToFuture
 
+    "updates the context with the given product fields" in {
+      val metadataCtx = genMetadaCtx.sample.get
+      val staticFieldName = "staticFieldName"
+      val staticValueName = "staticValueName"
+      val randomId = Gen.identifier.sample.get
 
-    "does not update context with null values" in {
+      Task(MDC.put(staticFieldName, staticValueName)) *>
+        Task(MDC.put("idString", randomId)) *>
+        Task{
+          MDC.get(staticFieldName) shouldBe staticValueName
+          MDC.get("idString") shouldBe randomId
+        } *>
+        Task(MonixMDCAdapter.updateContext(metadataCtx)) *>
+        Task.eval {
+          MDC.get("idString") shouldBe metadataCtx.idString
+          MDC.get("idInt") shouldBe metadataCtx.idInt.toString
+          MDC.get("timestamp") shouldBe metadataCtx.timestamp.toString
+          MDC.get("other") shouldBe metadataCtx.other.toString
+
+          //the static field name is persisted since we were updating
+          MDC.get(staticFieldName) shouldBe staticValueName
+          MDC.get("random") shouldBe null
+        }
+    }.runToFuture
+
+    "does not set context with null values" in {
       val metadataCtx = MetadataContext(null, 1, null, Other(null))
 
-      Task.evalAsync(MonixMDCAdapter.updateContext(metadataCtx)) >>
+      Task.evalAsync(MonixMDCAdapter.setContext(metadataCtx)) >>
         Task {
           Option(MDC.get("idString")) shouldBe None
           Option(MDC.get("idInt")) shouldBe Some("1")
