@@ -21,7 +21,7 @@ import monix.execution.misc.Local
 import ch.qos.logback.classic.util.LogbackMDCAdapter
 import org.slf4j.MDC
 
-import scala.jdk.CollectionConverters._
+import collection.JavaConverters._
 import java.{util => ju}
 
 class MonixMDCAdapter extends LogbackMDCAdapter {
