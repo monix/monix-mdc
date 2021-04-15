@@ -19,8 +19,9 @@ package monix.mdc
 
 import monix.execution.misc.Local
 import ch.qos.logback.classic.util.LogbackMDCAdapter
-import collection.JavaConverters._
+import org.slf4j.MDC
 
+import collection.JavaConverters._
 import java.{util => ju}
 
 class MonixMDCAdapter extends LogbackMDCAdapter {
@@ -33,14 +34,16 @@ class MonixMDCAdapter extends LogbackMDCAdapter {
   override def remove(key: String): Unit = local.update(local() - key)
 
   // Note: we're resetting the Local to default, not clearing the actual hashmap
-  override def clear(): Unit                               = local.clear()
+  override def clear(): Unit = local.clear()
 
   override def getCopyOfContextMap: ju.Map[String, String] = local().asJava
 
   override def setContextMap(contextMap: ju.Map[String, String]): Unit = local.update(contextMap.asScala.toMap)
 
   override def getPropertyMap: ju.Map[String, String] = local().asJava
-  override def getKeys: ju.Set[String]                = local().keySet.asJava
+
+  override def getKeys: ju.Set[String] = local().keySet.asJava
+
 }
 
 object MonixMDCAdapter {
@@ -59,4 +62,35 @@ object MonixMDCAdapter {
     field.set(null, new MonixMDCAdapter)
     field.setAccessible(false)
   }
+
+  private[this] def productToMap[T <: Product](product: T): Map[String, String] = {
+    val fields = product.getClass.getDeclaredFields.map(_.getName)
+    val values = product.productIterator.toSeq.map {
+      case maybe: Option[_] => maybe
+      case value => Option(value)
+    }
+    fields.zip(values).collect { case (k, Some(v)) => (k, v.toString) }.toMap
+  }
+
+  /*
+   * Set the diagnostic context with the values of the given
+   * product with its respective field names as the keys.
+   *
+   * The current context will be fully overwritten with the new values.
+   */
+  def setContext[T <: Product](product: T): Unit = {
+    MDC.setContextMap(productToMap(product).asJava)
+  }
+
+  /**
+   * Puts the values of the given product with its respective
+   * field names as the keys into the diagnostic context.
+   *
+   * The current context will remain the same, but only the
+   * fields that already existed will be overwritten.
+   */
+  def updateContext[T <: Product](product: T): Unit = {
+    productToMap(product).foreach(kv => MDC.put(kv._1, kv._2))
+  }
+
 }

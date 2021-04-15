@@ -35,7 +35,7 @@ class MDCBasicSpec extends AsyncWordSpec with Matchers with InitializeMDC with B
     MDC.clear()
   }
 
-  def getAndPut(key: String, value: String): Task[String] =
+  def putAndGet(key: String, value: String): Task[String] =
     for {
       _ <- Task {
         MDC.put(key, value)
@@ -49,7 +49,7 @@ class MDCBasicSpec extends AsyncWordSpec with Matchers with InitializeMDC with B
     "Write and get a value" in {
       val keyValue = KeyValue.keyValueGenerator.sample.get
 
-      val task = getAndPut(keyValue.key, keyValue.value)
+      val task = putAndGet(keyValue.key, keyValue.value)
       task.runToFutureOpt.map { _ shouldBe keyValue.value }
     }
 
@@ -57,7 +57,7 @@ class MDCBasicSpec extends AsyncWordSpec with Matchers with InitializeMDC with B
       val keyValues = MultipleKeysMultipleValues.multipleKeyValueGenerator.sample.get
 
       val tasks = keyValues.keysAndValues.map { keyValue =>
-        TaskLocal.isolate(getAndPut(keyValue.key, keyValue.value).executeAsync)
+        TaskLocal.isolate(putAndGet(keyValue.key, keyValue.value).executeAsync)
       }
 
       val task = Task.parSequence(tasks)

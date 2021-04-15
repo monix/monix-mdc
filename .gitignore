@@ -23,3 +23,4 @@ project/plugins/project/
 /website/static/api/
 /website/variables.js
 /website/yarn.lock
+.bsp/
