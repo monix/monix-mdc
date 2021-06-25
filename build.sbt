@@ -1,7 +1,7 @@
 import sbt.url
 
-addCommandAlias("ci-js",       s";clean ;logbackJS/test")
-addCommandAlias("ci-jvm",      s";clean ;logbackJVM/test")
+addCommandAlias("ci-js",       s";clean ;logbackJS/test ;log4j2JS/test")
+addCommandAlias("ci-jvm",      s";clean ;logbackJVM/test ;log4j2JVM/test")
 
 inThisBuild(List(
   organization := "io.monix",
@@ -25,11 +25,11 @@ lazy val `monix-mdc` = project.in(file("."))
   .settings(sharedSettings)
 
 lazy val rootJVM = project
-  .aggregate(logback.jvm)
+  .aggregate(logback.jvm, log4j2.jvm)
   .settings(skipOnPublishSettings)
 
 lazy val rootJS = project
-  .aggregate(logback.js)
+  .aggregate(logback.js, log4j2.js)
   .settings(skipOnPublishSettings)
 
 lazy val logback = crossProject(JSPlatform, JVMPlatform)
@@ -41,7 +41,21 @@ lazy val logback = crossProject(JSPlatform, JVMPlatform)
       "ch.qos.logback" % "logback-classic"  % "1.2.3",
       "org.scalatest"  %% "scalatest"       % "3.1.0" % Test,
       "org.scalacheck" %% "scalacheck"      % "1.14.0" % Test,
-      "io.monix"       %% "monix-eval"           % monixVersion % Test,
+      "io.monix"       %% "monix-eval"      % monixVersion % Test,
+    )
+  )
+  .enablePlugins(AutomateHeaderPlugin)
+
+lazy val log4j2 = crossProject(JSPlatform, JVMPlatform)
+  .in(file("log4j2"))
+  .settings(sharedSettings)
+  .settings(
+    name := "monix-mdc-log4j2",
+    libraryDependencies ++= Seq(
+      "org.apache.logging.log4j" % "log4j-api"        % "2.14.1",
+      "org.scalatest"            %% "scalatest"       % "3.1.0" % Test,
+      "org.scalacheck"           %% "scalacheck"      % "1.14.0" % Test,
+      "io.monix"                 %% "monix-eval"      % monixVersion % Test,
     )
   )
   .enablePlugins(AutomateHeaderPlugin)
