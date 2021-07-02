@@ -21,8 +21,8 @@ import monix.eval.Task
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
-import org.slf4j.MDC
 import monix.execution.Scheduler.Implicits.global
+import org.apache.logging.log4j.ThreadContext
 
 import java.time.Instant
 
@@ -47,17 +47,17 @@ class MDCProductSpec extends AsyncWordSpec with Matchers {
       val staticFieldName = "staticFieldName"
       val staticValueName = "staticValueName"
 
-      Task(MDC.put(staticFieldName, staticValueName)) *>
-        Task(MDC.get(staticFieldName) shouldBe staticValueName) *>
+      Task(ThreadContext.put(staticFieldName, staticValueName)) *>
+        Task(ThreadContext.get(staticFieldName) shouldBe staticValueName) *>
         Task(MonixMDCAdapter.setContext(metadataCtx)) *>
         Task.eval {
-          MDC.get("idString") shouldBe metadataCtx.idString
-          MDC.get("idInt") shouldBe metadataCtx.idInt.toString
-          MDC.get("timestamp") shouldBe metadataCtx.timestamp.toString
-          MDC.get("other") shouldBe metadataCtx.other.toString
+          ThreadContext.get("idString") shouldBe metadataCtx.idString
+          ThreadContext.get("idInt") shouldBe metadataCtx.idInt.toString
+          ThreadContext.get("timestamp") shouldBe metadataCtx.timestamp.toString
+          ThreadContext.get("other") shouldBe metadataCtx.other.toString
           // the value is `null` because `setContext` is overwriting it
-          MDC.get(staticFieldName) shouldBe null
-          MDC.get("random") shouldBe null
+          ThreadContext.get(staticFieldName) shouldBe null
+          ThreadContext.get("random") shouldBe null
         }
     }.runToFuture
 
@@ -67,22 +67,22 @@ class MDCProductSpec extends AsyncWordSpec with Matchers {
       val staticValueName = "staticValueName"
       val randomId = Gen.identifier.sample.get
 
-      Task(MDC.put(staticFieldName, staticValueName)) *>
-        Task(MDC.put("idString", randomId)) *>
+      Task(ThreadContext.put(staticFieldName, staticValueName)) *>
+        Task(ThreadContext.put("idString", randomId)) *>
         Task{
-          MDC.get(staticFieldName) shouldBe staticValueName
-          MDC.get("idString") shouldBe randomId
+          ThreadContext.get(staticFieldName) shouldBe staticValueName
+          ThreadContext.get("idString") shouldBe randomId
         } *>
         Task(MonixMDCAdapter.updateContext(metadataCtx)) *>
         Task.eval {
-          MDC.get("idString") shouldBe metadataCtx.idString
-          MDC.get("idInt") shouldBe metadataCtx.idInt.toString
-          MDC.get("timestamp") shouldBe metadataCtx.timestamp.toString
-          MDC.get("other") shouldBe metadataCtx.other.toString
+          ThreadContext.get("idString") shouldBe metadataCtx.idString
+          ThreadContext.get("idInt") shouldBe metadataCtx.idInt.toString
+          ThreadContext.get("timestamp") shouldBe metadataCtx.timestamp.toString
+          ThreadContext.get("other") shouldBe metadataCtx.other.toString
 
           //the static field name is persisted since we were updating
-          MDC.get(staticFieldName) shouldBe staticValueName
-          MDC.get("random") shouldBe null
+          ThreadContext.get(staticFieldName) shouldBe staticValueName
+          ThreadContext.get("random") shouldBe null
         }
     }.runToFuture
 
@@ -91,10 +91,10 @@ class MDCProductSpec extends AsyncWordSpec with Matchers {
 
       Task.evalAsync(MonixMDCAdapter.setContext(metadataCtx)) >>
         Task {
-          Option(MDC.get("idString")) shouldBe None
-          Option(MDC.get("idInt")) shouldBe Some("1")
-          Option(MDC.get("timestamp")) shouldBe None
-          MDC.get("other") shouldBe metadataCtx.other.toString
+          Option(ThreadContext.get("idString")) shouldBe None
+          Option(ThreadContext.get("idInt")) shouldBe Some("1")
+          Option(ThreadContext.get("timestamp")) shouldBe None
+          ThreadContext.get("other") shouldBe metadataCtx.other.toString
         }
     }.runToFuture
 
